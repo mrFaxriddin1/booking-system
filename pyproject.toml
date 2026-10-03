@@ -1,0 +1,20 @@
+[project]
+name = "booking-system"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "mrFaxriddin", email = "misoms@proton.me" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "django==5.2",
+    "django-environ>=0.14.0",
+]
+
+[project.scripts]
+booking-system = "booking_system:main"
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"
