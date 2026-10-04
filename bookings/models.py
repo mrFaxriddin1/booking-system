@@ -1,9 +1,11 @@
 from typing import ClassVar
 
+from django.core.exceptions import ValidationError
 from django.db import models
 
-
 # Create your models here.
+
+
 class Service(models.Model):
     name = models.CharField(max_length=100)
     duration_minutes = models.PositiveSmallIntegerField()
@@ -80,3 +82,20 @@ class Booking(models.Model):
 
     def __str__(self) -> str:
         return f"{self.customer_name} - {self.provider} ({self.start_time})"
+
+    def clean(self) -> None:
+        if self.start_time and self.end_time and self.start_time >= self.end_time:
+            raise ValidationError(
+                "Boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak")
+
+        conflicts = Booking.objects.filter(
+            provider=self.provider,
+            start_time__lt=self.end_time,
+            end_time__gt=self.start_time,
+        ).exclude(status=Booking.Status.CANCELLED)
+
+        if self.pk:
+            conflicts = conflicts.exclude(pk=self.pk)
+
+        if conflicts.exists():
+            raise ValidationError("Bu provider uchun bu vaqt oralig'i band.")
