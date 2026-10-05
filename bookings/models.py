@@ -1,4 +1,3 @@
-from typing import ClassVar
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -45,7 +44,7 @@ class WorkingHours(models.Model):
     end_time = models.TimeField()
 
     class Meta:
-        ordering: ClassVar[list] = ["provider", "weekday", "start_time"]
+        ordering = ["provider", "weekday", "start_time"]
 
     def get_weekday_display(self):
         return self.Weekday(self.weekday).label
@@ -78,7 +77,7 @@ class Booking(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering: ClassVar[list] = ["start_time"]
+        ordering = ["start_time"]
 
     def __str__(self) -> str:
         return f"{self.customer_name} - {self.provider} ({self.start_time})"
