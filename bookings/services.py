@@ -1,9 +1,11 @@
 from datetime import date, datetime, timedelta
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
 from .models import Booking, Provider, WorkingHours
+from .tasks import send_booking_reminder
 
 
 def get_available_slots(provider, service, target_date: date) -> list[datetime]:
@@ -69,4 +71,10 @@ def create_booking_safely(*, provider: Provider, service, customer_name, custome
         )
         booking.full_clean()
         booking.save()
+
+        reminder_time = start_time - timedelta(hours=1)
+        transaction.on_commit(
+            lambda: send_booking_reminder.apply_async(
+                args=[booking.id], eta=reminder_time)  # type: ignore
+        )
         return booking
