@@ -1,8 +1,9 @@
 from datetime import date, datetime, timedelta
-
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils import timezone
 
-from .models import Booking, WorkingHours
+from .models import Booking, Provider, WorkingHours
 
 
 def get_available_slots(provider, service, target_date: date) -> list[datetime]:
@@ -41,3 +42,31 @@ def get_available_slots(provider, service, target_date: date) -> list[datetime]:
             cursor += duration
 
     return slots
+
+
+def create_booking_safely(*, provider: Provider, service, customer_name, customer_phone, start_time, end_time):
+    with transaction.atomic():
+        # Provider qatorini qulflaymiz — shu providerga tegishli
+        # boshqa so'rov, shu transaction tugaguncha, shu yerda kutib turadi.
+        locked_provider = Provider.objects.select_for_update().get(pk=provider.pk)
+
+        conflicts = Booking.objects.filter(
+            provider=locked_provider,
+            start_time__lt=end_time,
+            end_time__gt=start_time,
+        ).exclude(status=Booking.Status.CANCELLED)
+
+        if conflicts.exists():
+            raise ValidationError("Bu provider uchun bu vaqt oralig'i band.")
+
+        booking = Booking(
+            provider=locked_provider,
+            service=service,
+            customer_name=customer_name,
+            customer_phone=customer_phone,
+            start_time=start_time,
+            end_time=end_time,
+        )
+        booking.full_clean()
+        booking.save()
+        return booking
