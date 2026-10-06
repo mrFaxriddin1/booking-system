@@ -1,7 +1,11 @@
 
 from rest_framework import serializers
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+from rest_framework.exceptions import ValidationError as DRFValidationError
+
 from .models import Booking, Provider, Service
+from .services import create_booking_safely
 
 
 class ServiceSerializer(serializers.ModelSerializer):
@@ -33,7 +37,9 @@ class BookingSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["status", "created_at"]
 
-    def validate(self, attrs):
-        booking = Booking(**attrs)
-        booking.full_clean(exclude=["status"])
-        return attrs
+    def create(self, validated_data):
+        try:
+            return create_booking_safely(**validated_data)
+        except DjangoValidationError as e:
+            raise DRFValidationError(e.message_dict if hasattr(
+                e, "message_dict") else e.messages)
