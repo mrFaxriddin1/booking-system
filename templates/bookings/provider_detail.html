@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ provider.name }}</h2>
+<p>{{ provider.bio }}</p>
+
+<form method="get">
+    <label>Xizmat:
+        <select name="service">
+            {% for service in services %}
+                <option value="{{ service.id }}" {% if selected_service.id == service.id %}selected{% endif %}>
+                    {{ service.name }} ({{ service.duration_minutes }} daq)
+                </option>
+            {% endfor %}
+        </select>
+    </label>
+    <label>Sana:
+        <input type="date" name="date" value="{{ selected_date|default:'' }}" min="{{ today|date:'Y-m-d' }}">
+    </label>
+    <button class="btn" type="submit">Bo'sh vaqtlarni ko'rish</button>
+</form>
+
+{% if selected_date %}
+    <h3>{{ selected_date }} kunlari bo'sh vaqtlar</h3>
+    {% if slots %}
+        {% for slot in slots %}
+            <form method="post" class="card">
+                {% csrf_token %}
+                <input type="hidden" name="service_id" value="{{ selected_service.id }}">
+                <input type="hidden" name="slot_start" value="{{ slot|date:'c' }}">
+                <strong>{{ slot|date:"H:i"}}</strong>
+                <input type="text" name="customer_name" placeholder="Ismingiz" required>
+                <input type="text" name="customer_phone" placeholder="Telefon" required>
+                <button type="submit" class="btn">Bron qilish</button>
+            </form>
+        {% endfor %}
+    {% else %}
+        <p>BU kun bo'sh vaqt yo'q</p>
+    {% endif %}
+{% endif %}
+
+{% endblock content %}

@@ -5,16 +5,13 @@ from django.db import transaction
 from django.utils import timezone
 
 from .models import Booking, Provider, WorkingHours
-from .tasks import send_booking_reminder
 
 
 def get_available_slots(provider, service, target_date: date) -> list[datetime]:
     weekday = target_date.weekday()
     duration = timedelta(minutes=service.duration_minutes)
 
-    working_periods = WorkingHours.objects.filter(
-        provider=provider, weekday=weekday
-    )
+    working_periods = WorkingHours.objects.filter(provider=provider, weekday=weekday)
 
     existing_bookings = Booking.objects.filter(
         provider=provider,
@@ -25,9 +22,9 @@ def get_available_slots(provider, service, target_date: date) -> list[datetime]:
 
     for period in working_periods:
         work_start = timezone.make_aware(
-            datetime.combine(target_date, period.start_time))
-        work_end = timezone.make_aware(
-            datetime.combine(target_date, period.end_time))
+            datetime.combine(target_date, period.start_time)
+        )
+        work_end = timezone.make_aware(datetime.combine(target_date, period.end_time))
 
         cursor = work_start
         while cursor + duration <= work_end:
@@ -46,7 +43,9 @@ def get_available_slots(provider, service, target_date: date) -> list[datetime]:
     return slots
 
 
-def create_booking_safely(*, provider: Provider, service, customer_name, customer_phone, start_time, end_time):
+def create_booking_safely(
+    *, provider: Provider, service, customer_name, customer_phone, start_time, end_time
+):
     with transaction.atomic():
         # Provider qatorini qulflaymiz — shu providerga tegishli
         # boshqa so'rov, shu transaction tugaguncha, shu yerda kutib turadi.
@@ -71,10 +70,4 @@ def create_booking_safely(*, provider: Provider, service, customer_name, custome
         )
         booking.full_clean()
         booking.save()
-
-        reminder_time = start_time - timedelta(hours=1)
-        transaction.on_commit(
-            lambda: send_booking_reminder.apply_async(
-                args=[booking.id], eta=reminder_time)  # type: ignore
-        )
         return booking

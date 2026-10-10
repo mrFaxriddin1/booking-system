@@ -17,7 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from bookings.views import home, provider_detail
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', home, name="home"),
+    path("provider/<int:provider_id>/", provider_detail, name="provider-page"),
     path('api/', include("bookings.urls")),
 ]

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Xizmatlar</h2>
+    {% for service in services %}
+        <div class="card">
+            <strong>{{ service.name }}</strong> — {{ service.duration_minutes }} daqiqa, {{ service.price }} so'm
+        </div>
+    {% empty %}
+        <p>Hozircha xizmatlar yo'q.</p>
+    {% endfor %}
+
+    <h2>Mutaxassislar</h2>
+    {% for provider in providers %}
+        <div class="card">
+            <strong>{{ provider.name }}</strong>
+            <p>{{ provider.bio }}</p>
+            <a class="btn" href="{% url 'provider-page' provider.id %}">Bron qilish</a>
+        </div>
+    {% empty %}
+        <p>Hozircha mutaxassislar yo'q.</p>
+    {% endfor %}
+{% endblock %}

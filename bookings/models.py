@@ -1,6 +1,6 @@
-
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 
 # Create your models here.
 
@@ -18,8 +18,7 @@ class Service(models.Model):
 class Provider(models.Model):
     name = models.CharField(max_length=100)
     bio = models.TextField(blank=True)
-    services = models.ManyToManyField(
-        Service, blank=True, related_name="providers")
+    services = models.ManyToManyField(Service, blank=True, related_name="providers")
     is_active = models.BooleanField(default=True)
 
     def __str__(self) -> str:
@@ -85,7 +84,11 @@ class Booking(models.Model):
     def clean(self) -> None:
         if self.start_time and self.end_time and self.start_time >= self.end_time:
             raise ValidationError(
-                "Boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak")
+                "Boshlanish vaqti tugash vaqtidan oldin bo'lishi kerak"
+            )
+
+        if self.start_time and self.start_time < timezone.now():
+            raise ValidationError("O'tmishdagi vaqtga bron qilib bo'lmaydi.")
 
         conflicts = Booking.objects.filter(
             provider=self.provider,
