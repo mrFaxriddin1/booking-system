@@ -1,7 +1,7 @@
 from datetime import timedelta
 
-from django.db.models.signals import post_save
 from django.db import transaction
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from .models import Booking
@@ -15,6 +15,5 @@ def schedule_reminder_on_create(sender, instance, created, **kwargs):
 
     reminder_time = instance.start_time - timedelta(hours=1)
     transaction.on_commit(
-        lambda: send_booking_reminder.apply_async(
-            args=[instance.id], eta=reminder_time)
+        lambda: send_booking_reminder.apply_async(args=[instance.id], eta=reminder_time)
     )
